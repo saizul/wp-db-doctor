@@ -1,0 +1,42 @@
+# Example configuration for wp-db-doctor. Pass it with: wp-db-doctor audit -c wp-db-doctor.toml
+# Every key is optional; the values below are the defaults unless noted.
+
+[thresholds]
+# Autoloaded options (WordPress Site Health warns at 800 KB)
+autoload_warning_kb = 800
+autoload_critical_kb = 3072
+autoload_top = 15                # rows in the "largest autoloaded options" table
+autoload_large_option_kb = 64    # options at least this big get a REVIEW "autoload off" suggestion
+
+expired_transients_warning = 500
+
+revisions_warning = 2000
+revisions_critical = 20000
+revisions_min_age_days = 30      # the fix plan only deletes revisions older than this
+
+auto_draft_age_days = 7
+auto_drafts_warning = 100
+
+trash_min_age_days = 30
+trashed_warning = 200
+
+comments_warning = 1000
+comments_critical = 50000
+
+orphans_warning = 1000
+
+action_scheduler_retention_days = 30
+action_scheduler_warning = 20000
+action_scheduler_critical = 500000
+action_scheduler_overdue_warning = 100
+
+wc_sessions_expired_warning = 1000
+
+large_table_mb = 256
+table_overhead_mb = 64
+tables_top = 10
+
+[checks]
+# skip = ["table_prefix"]
+# only = ["autoload", "expired_transients"]
+fail_on = "critical"             # not a default: audits exit 0 unless this or --fail-on is set

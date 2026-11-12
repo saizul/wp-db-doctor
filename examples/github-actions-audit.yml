@@ -1,0 +1,31 @@
+# Example: nightly audit of a staging database from GitHub Actions.
+# Store the credentials as repository secrets; never commit them.
+name: WordPress database audit
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "git+https://github.com/saizul/wp-db-doctor.git"
+      - name: Audit
+        env:
+          WPDD_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          wp-db-doctor audit \
+            --host "${{ secrets.STAGING_DB_HOST }}" \
+            --user "${{ secrets.STAGING_DB_USER }}" \
+            --database "${{ secrets.STAGING_DB_NAME }}" \
+            -o report.html -o report.json --fail-on critical
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wp-db-doctor-report
+          path: report.*

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>wp-db-doctor: shop_wp</title>
+<style>
+:root{--bg:#f7f7f8;--fg:#1d1f23;--muted:#5c6370;--card:#fff;--line:#e3e5e8;
+--ok:#1f8a4c;--info:#2463b5;--warning:#b06a00;--critical:#c0262d;--skipped:#7a7f87}
+@media (prefers-color-scheme:dark){:root{--bg:#15171a;--fg:#e6e7e9;--muted:#9aa0a8;
+--card:#1e2126;--line:#30343b;--ok:#47c27a;--info:#6ea4ef;--warning:#e7a33e;
+--critical:#f0656b;--skipped:#8d939b}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+background:var(--bg);color:var(--fg)}
+main{max-width:1100px;margin:0 auto;padding:32px 20px 60px}
+h1{font-size:26px;margin:0 0 4px}
+h2{font-size:18px;margin:0}
+.muted{color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:8px 24px;margin:16px 0 24px;padding:0;list-style:none}
+.facts b{font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;
+margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card .n{font-size:28px;font-weight:700}
+.check{background:var(--card);border:1px solid var(--line);border-left-width:5px;
+border-radius:10px;padding:16px 18px;margin:0 0 14px}
+.check header{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.badge{font-size:12px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:99px;
+color:#fff}
+.s-ok{border-left-color:var(--ok)} .b-ok{background:var(--ok)}
+.s-info{border-left-color:var(--info)} .b-info{background:var(--info)}
+.s-warning,.s-error{border-left-color:var(--warning)} .b-warning,.b-error{background:var(--warning)}
+.s-critical{border-left-color:var(--critical)} .b-critical{background:var(--critical)}
+.s-skipped{border-left-color:var(--skipped)} .b-skipped{background:var(--skipped)}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+td{word-break:break-word}
+ul{margin:10px 0 0;padding-left:20px}
+details{margin-top:10px}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;
+overflow:auto;font-size:12.5px}
+footer{margin-top:32px;font-size:13px}
+</style></head><body><main>
+<h1>WordPress database report: shop_wp</h1>
+<ul class="facts">
+<li><b>Database</b> shop_wp</li>
+<li><b>Host</b> shop_user@localhost:3307</li>
+<li><b>Prefix</b> shop_</li>
+<li><b>Server</b> 5.7.44-log</li>
+<li><b>Tables</b> 19</li>
+<li><b>Size</b> 1.6 GB</li>
+<li><b>Generated</b> 2026-11-12T08:00:00Z</li>
+</ul>
+<section class="cards">
+<div class="card s-critical" style="border-left:5px solid var(--critical)"><div class="n">5</div><div class="muted">critical</div></div>
+<div class="card s-warning" style="border-left:5px solid var(--warning)"><div class="n">10</div><div class="muted">warning</div></div>
+<div class="card s-info" style="border-left:5px solid var(--info)"><div class="n">1</div><div class="muted">info</div></div>
+<div class="card s-ok" style="border-left:5px solid var(--ok)"><div class="n">2</div><div class="muted">ok</div></div>
+<div class="card s-skipped" style="border-left:5px solid var(--skipped)"><div class="n">0</div><div class="muted">skipped</div></div>
+</section>
+<section class="check s-warning" id="table_prefix">
+<header><span class="badge b-warning">WARN</span><h2>Table prefix</h2><code class="muted">table_prefix</code></header>
+<p>prefix shop_, 1 other install in the same schema</p>
+<table><thead><tr>
+<th>prefix</th>
+<th>role</th>
+</tr></thead><tbody>
+<tr><td>old_</td><td>other install</td></tr>
+<tr><td>shop_</td><td>this site</td></tr>
+</tbody></table>
+<ul>
+<li>Other WordPress installs share this database (old_). If they are leftovers, export them and drop their tables; shared schemas make backups and restores riskier.</li>
+</ul>
+</section>
+<section class="check s-warning" id="server_version">
+<header><span class="badge b-warning">WARN</span><h2>Database server</h2><code class="muted">server_version</code></header>
+<p>MySQL 5.7.44 (end of life 2023-10-31)</p>
+<ul>
+<li>MySQL 5.7 reached end of life on 2023-10-31 and no longer gets security fixes. Plan an upgrade to a supported LTS release.</li>
+<li>innodb_buffer_pool_size is 1.0 GB but InnoDB data and indexes take 1.6 GB. On a dedicated database server give the buffer pool 50-70% of RAM.</li>
+</ul>
+</section>
+<section class="check s-critical" id="autoload">
+<header><span class="badge b-critical">CRIT</span><h2>Autoloaded options</h2><code class="muted">autoload</code></header>
+<p>4.0 MB autoloaded across 1,450 options</p>
+<table><thead><tr>
+<th>option</th>
+<th>size</th>
+<th>share</th>
+<th>likely owner</th>
+</tr></thead><tbody>
+<tr><td>wpseo_premium_redirects_export</td><td>1.6 MB</td><td>39.1%</td><td>Yoast SEO</td></tr>
+<tr><td>cron</td><td>900.0 KB</td><td>22.0%</td><td>WordPress core cron events (large means stuck or duplicate events)</td></tr>
+<tr><td>_transient_feed_abc</td><td>300.0 KB</td><td>7.3%</td><td>transient (should not be autoloaded)</td></tr>
+<tr><td>old_plugin_cache</td><td>200.0 KB</td><td>4.9%</td><td></td></tr>
+<tr><td>small_one</td><td>1.0 KB</td><td>0.0%</td><td></td></tr>
+</tbody></table>
+<ul>
+<li>Every page load reads all autoloaded options; with a persistent object cache the whole set is one cache item, so keep it well under 1 MB.</li>
+<li>Look at the largest options first. Leftovers from removed plugins can be deleted; settings of active plugins can often be switched to autoload &#x27;off&#x27; (review the commented UPDATE statements in the fix plan).</li>
+<li>Some transients are autoloaded. That happens when a plugin calls set_transient() without an expiry; report it to the plugin author.</li>
+<li>The cron option is very large: list events with `wp cron event list` and remove duplicates left by deactivated plugins.</li>
+</ul>
+<details><summary>Proposed SQL (2)</summary><pre>
+-- REVIEW: Stop autoloading wpseo_premium_redirects_export (1.6 MB); confirm the owning plugin reads it with get_option() only where needed
+-- UPDATE `shop_options` SET autoload = &#x27;off&#x27; WHERE option_name = &#x27;wpseo_premium_redirects_export&#x27;;
+
+
+-- REVIEW: Stop autoloading old_plugin_cache (200.0 KB); confirm the owning plugin reads it with get_option() only where needed
+-- UPDATE `shop_options` SET autoload = &#x27;off&#x27; WHERE option_name = &#x27;old_plugin_cache&#x27;;
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="expired_transients">
+<header><span class="badge b-warning">WARN</span><h2>Expired transients</h2><code class="muted">expired_transients</code></header>
+<p>1,825 expired transients out of 9,120 stored (30.0 MB including timeouts)</p>
+<ul>
+<li>WP-CLI alternative that runs WordPress hooks: `wp transient delete --expired`.</li>
+<li>Many expired transients usually mean WP-Cron is not running. If DISABLE_WP_CRON is set, make sure a system cron calls wp-cron.php.</li>
+<li>A persistent object cache (Redis or Memcached) keeps transients out of the database entirely.</li>
+</ul>
+<details><summary>Proposed SQL (2)</summary><pre>
+-- Delete 1,800 expired transients (value and timeout rows), as delete_expired_transients() does
+DELETE a, b FROM `shop_options` a INNER JOIN `shop_options` b ON b.option_name = CONCAT(&#x27;_transient_&#x27;, SUBSTRING(a.option_name, 20)) WHERE a.option_name LIKE &#x27;\_transient\_timeout\_%&#x27; AND CAST(a.option_value AS UNSIGNED) &lt; UNIX_TIMESTAMP();
+
+
+-- Delete 25 expired site transients
+DELETE a, b FROM `shop_options` a INNER JOIN `shop_options` b ON b.option_name = CONCAT(&#x27;_site_transient_&#x27;, SUBSTRING(a.option_name, 25)) WHERE a.option_name LIKE &#x27;\_site\_transient\_timeout\_%&#x27; AND CAST(a.option_value AS UNSIGNED) &lt; UNIX_TIMESTAMP();
+
+
+</pre></details>
+</section>
+<section class="check s-critical" id="post_revisions">
+<header><span class="badge b-critical">CRIT</span><h2>Post revisions</h2><code class="muted">post_revisions</code></header>
+<p>25,000 revisions for 800 posts (300.0 MB of content); 21,000 older than 30 days</p>
+<table><thead><tr>
+<th>post id</th>
+<th>type</th>
+<th>title</th>
+<th>revisions</th>
+</tr></thead><tbody>
+<tr><td>12</td><td>page</td><td>Home</td><td>640</td></tr>
+<tr><td>99</td><td></td><td>(parent missing)</td><td>300</td></tr>
+</tbody></table>
+<ul>
+<li>Revisions are unlimited. Add define( &#x27;WP_POST_REVISIONS&#x27;, 5 ); to wp-config.php to keep only the latest five per post.</li>
+<li>WP-CLI alternative (runs WordPress hooks): `wp post delete $(wp post list --post_type=revision --format=ids) --force`.</li>
+</ul>
+<details><summary>Proposed SQL (3)</summary><pre>
+-- Delete post meta of 21,000 revisions older than 30 days
+DELETE pm FROM `shop_postmeta` pm INNER JOIN `shop_posts` p ON p.ID = pm.post_id WHERE p.post_type = &#x27;revision&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete term relationships of 21,000 revisions older than 30 days
+DELETE tr FROM `shop_term_relationships` tr INNER JOIN `shop_posts` p ON p.ID = tr.object_id WHERE p.post_type = &#x27;revision&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete 21,000 revisions older than 30 days
+DELETE p FROM `shop_posts` p WHERE p.post_type = &#x27;revision&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="auto_drafts">
+<header><span class="badge b-warning">WARN</span><h2>Auto-drafts</h2><code class="muted">auto_drafts</code></header>
+<p>420 auto-drafts, 400 older than 7 days</p>
+<ul>
+<li>400 auto-drafts are older than 7 days, so the daily wp_scheduled_auto_draft_delete event is not running. Check WP-Cron (`wp cron event list`, DISABLE_WP_CRON and the system crontab).</li>
+</ul>
+<details><summary>Proposed SQL (3)</summary><pre>
+-- Delete post meta of 400 auto-drafts older than 7 days
+DELETE pm FROM `shop_postmeta` pm INNER JOIN `shop_posts` p ON p.ID = pm.post_id WHERE p.post_status = &#x27;auto-draft&#x27; AND p.post_date &lt; NOW() - INTERVAL 7 DAY;
+
+
+-- Delete term relationships of 400 auto-drafts older than 7 days
+DELETE tr FROM `shop_term_relationships` tr INNER JOIN `shop_posts` p ON p.ID = tr.object_id WHERE p.post_status = &#x27;auto-draft&#x27; AND p.post_date &lt; NOW() - INTERVAL 7 DAY;
+
+
+-- Delete 400 auto-drafts older than 7 days
+DELETE p FROM `shop_posts` p WHERE p.post_status = &#x27;auto-draft&#x27; AND p.post_date &lt; NOW() - INTERVAL 7 DAY;
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="trashed_posts">
+<header><span class="badge b-warning">WARN</span><h2>Trashed posts</h2><code class="muted">trashed_posts</code></header>
+<p>240 trashed posts, 200 trashed more than 30 days ago</p>
+<table><thead><tr>
+<th>post type</th>
+<th>trashed</th>
+<th>older than 30 days</th>
+</tr></thead><tbody>
+<tr><td>post</td><td>150</td><td>120</td></tr>
+<tr><td>shop_order</td><td>90</td><td>80</td></tr>
+</tbody></table>
+<ul>
+<li>Emptying the trash in wp-admin (or `wp post delete ... --force`) runs plugin hooks; prefer it for WooCommerce products and orders.</li>
+<li>WordPress empties the trash after EMPTY_TRASH_DAYS (30 by default) by cron; old trashed posts mean that event is not running.</li>
+<li>Trashed WooCommerce orders found. With HPOS enabled, delete them in WooCommerce &gt; Orders so the orders tables stay in sync.</li>
+</ul>
+<details><summary>Proposed SQL (5)</summary><pre>
+-- Delete post meta of 200 trashed posts older than 30 days
+DELETE pm FROM `shop_postmeta` pm INNER JOIN `shop_posts` p ON p.ID = pm.post_id WHERE p.post_status = &#x27;trash&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete term relationships of 200 trashed posts older than 30 days
+DELETE tr FROM `shop_term_relationships` tr INNER JOIN `shop_posts` p ON p.ID = tr.object_id WHERE p.post_status = &#x27;trash&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete comment meta of comments on 200 trashed posts older than 30 days
+DELETE cm FROM `shop_commentmeta` cm INNER JOIN `shop_comments` c ON c.comment_ID = cm.comment_id INNER JOIN `shop_posts` p ON p.ID = c.comment_post_ID WHERE p.post_status = &#x27;trash&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete comments on 200 trashed posts older than 30 days
+DELETE c FROM `shop_comments` c INNER JOIN `shop_posts` p ON p.ID = c.comment_post_ID WHERE p.post_status = &#x27;trash&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete 200 trashed posts older than 30 days
+DELETE p FROM `shop_posts` p WHERE p.post_status = &#x27;trash&#x27; AND p.post_modified_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+</pre></details>
+</section>
+<section class="check s-critical" id="spam_comments">
+<header><span class="badge b-critical">CRIT</span><h2>Spam and trashed comments</h2><code class="muted">spam_comments</code></header>
+<p>60,000 spam comments, 40 trashed, 3 pending</p>
+<table><thead><tr>
+<th>status</th>
+<th>comments</th>
+</tr></thead><tbody>
+<tr><td>spam</td><td>60,000</td></tr>
+<tr><td>trash</td><td>40</td></tr>
+<tr><td>post-trashed</td><td>0</td></tr>
+<tr><td>pending</td><td>3</td></tr>
+</tbody></table>
+<ul>
+<li>After deleting comments directly, refresh the cached counts with `wp comment recount`.</li>
+<li>Large spam volume: use an anti-spam plugin that discards obvious spam instead of storing it, or close comments on old posts.</li>
+</ul>
+<details><summary>Proposed SQL (2)</summary><pre>
+-- Delete comment meta of spam and trashed comments
+DELETE cm FROM `shop_commentmeta` cm INNER JOIN `shop_comments` c ON c.comment_ID = cm.comment_id WHERE c.comment_approved IN (&#x27;spam&#x27;, &#x27;trash&#x27;);
+
+
+-- Delete 60,040 spam or trashed comments
+DELETE c FROM `shop_comments` c WHERE c.comment_approved IN (&#x27;spam&#x27;, &#x27;trash&#x27;);
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="orphaned_postmeta">
+<header><span class="badge b-warning">WARN</span><h2>Orphaned post meta</h2><code class="muted">orphaned_postmeta</code></header>
+<p>54,000 orphaned rows (12.0 MB)</p>
+<table><thead><tr>
+<th>meta key</th>
+<th>rows</th>
+</tr></thead><tbody>
+<tr><td>_edit_lock</td><td>30,000</td></tr>
+<tr><td>_elementor_data</td><td>24,000</td></tr>
+</tbody></table>
+<ul>
+<li>Orphaned postmeta rows are left behind when posts are deleted with direct SQL or by plugins that skip the WordPress API. They are never read, so deleting them is safe.</li>
+</ul>
+<details><summary>Proposed SQL (1)</summary><pre>
+-- Delete 54,000 orphaned postmeta rows whose post no longer exists
+DELETE m FROM `shop_postmeta` m LEFT JOIN `shop_posts` p ON p.ID = m.post_id WHERE p.ID IS NULL;
+
+
+</pre></details>
+</section>
+<section class="check s-info" id="orphaned_termmeta">
+<header><span class="badge b-info">INFO</span><h2>Orphaned term meta</h2><code class="muted">orphaned_termmeta</code></header>
+<p>3 orphaned rows (90 B)</p>
+<table><thead><tr>
+<th>meta key</th>
+<th>rows</th>
+</tr></thead><tbody>
+<tr><td>order</td><td>3</td></tr>
+</tbody></table>
+<ul>
+<li>Orphaned termmeta rows are left behind when terms are deleted with direct SQL or by plugins that skip the WordPress API. They are never read, so deleting them is safe.</li>
+</ul>
+<details><summary>Proposed SQL (1)</summary><pre>
+-- Delete 3 orphaned termmeta rows whose term no longer exists
+DELETE m FROM `shop_termmeta` m LEFT JOIN `shop_terms` p ON p.term_id = m.term_id WHERE p.term_id IS NULL;
+
+
+</pre></details>
+</section>
+<section class="check s-ok" id="orphaned_commentmeta">
+<header><span class="badge b-ok">OK</span><h2>Orphaned comment meta</h2><code class="muted">orphaned_commentmeta</code></header>
+<p>0 orphaned rows (0 B)</p>
+</section>
+<section class="check s-ok" id="orphaned_usermeta">
+<header><span class="badge b-ok">OK</span><h2>Orphaned user meta</h2><code class="muted">orphaned_usermeta</code></header>
+<p>0 orphaned rows (0 B)</p>
+</section>
+<section class="check s-warning" id="orphaned_term_relationships">
+<header><span class="badge b-warning">WARN</span><h2>Orphaned term relationships</h2><code class="muted">orphaned_term_relationships</code></header>
+<p>1,200 relationships to missing posts, 4 to missing terms</p>
+<ul>
+<li>Term counts may be off after cleanup; refresh them with `wp term recount category post_tag` (add product_cat, product_tag for WooCommerce).</li>
+</ul>
+<details><summary>Proposed SQL (2)</summary><pre>
+-- Delete 1,200 term relationships of deleted posts
+DELETE r FROM `shop_term_relationships` r INNER JOIN `shop_term_taxonomy` tt ON tt.term_taxonomy_id = r.term_taxonomy_id LEFT JOIN `shop_posts` p ON p.ID = r.object_id WHERE p.ID IS NULL AND tt.taxonomy &lt;&gt; &#x27;link_category&#x27;;
+
+
+-- Delete 4 term relationships of deleted terms
+DELETE r FROM `shop_term_relationships` r LEFT JOIN `shop_term_taxonomy` tt ON tt.term_taxonomy_id = r.term_taxonomy_id WHERE tt.term_taxonomy_id IS NULL;
+
+
+</pre></details>
+</section>
+<section class="check s-critical" id="action_scheduler">
+<header><span class="badge b-critical">CRIT</span><h2>Action Scheduler</h2><code class="muted">action_scheduler</code></header>
+<p>603,500 actions, 582,500 finished more than 30 days ago, 450 overdue</p>
+<table><thead><tr>
+<th>status</th>
+<th>actions</th>
+<th>older than 30 days</th>
+</tr></thead><tbody>
+<tr><td>complete</td><td>600,000</td><td>580,000</td></tr>
+<tr><td>failed</td><td>3,000</td><td>2,500</td></tr>
+<tr><td>pending</td><td>500</td><td>0</td></tr>
+</tbody></table>
+<ul>
+<li>Action Scheduler keeps finished actions for 30 days by default and cleans them in batches of 20 per run, which cannot keep up with busy stores. Lower the period with the action_scheduler_retention_period filter, or raise the batch size with action_scheduler_cleanup_batch_size.</li>
+<li>450 pending actions are more than a day overdue: the queue runner is not keeping up. Check WP-Cron, or run the queue from system cron with `wp action-scheduler run`.</li>
+<li>Most failed hooks: woocommerce_run_product_attribute_lookup_update (2,900). Their logs say why.</li>
+</ul>
+<details><summary>Proposed SQL (3)</summary><pre>
+-- Delete log entries of finished actions older than 30 days
+DELETE l FROM `shop_actionscheduler_logs` l INNER JOIN `shop_actionscheduler_actions` a ON a.action_id = l.action_id WHERE a.status IN (&#x27;complete&#x27;, &#x27;failed&#x27;, &#x27;canceled&#x27;) AND a.scheduled_date_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete 582,500 finished actions older than 30 days (complete, failed, canceled)
+DELETE FROM `shop_actionscheduler_actions` WHERE status IN (&#x27;complete&#x27;, &#x27;failed&#x27;, &#x27;canceled&#x27;) AND scheduled_date_gmt &lt; UTC_TIMESTAMP() - INTERVAL 30 DAY;
+
+
+-- Delete log entries whose action no longer exists
+DELETE l FROM `shop_actionscheduler_logs` l LEFT JOIN `shop_actionscheduler_actions` a ON a.action_id = l.action_id WHERE a.action_id IS NULL;
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="woocommerce_sessions">
+<header><span class="badge b-warning">WARN</span><h2>WooCommerce sessions</h2><code class="muted">woocommerce_sessions</code></header>
+<p>9,000 sessions (40.0 MB), 7,000 expired</p>
+<ul>
+<li>WooCommerce removes expired sessions with the twice-daily woocommerce_cleanup_sessions event; a backlog means WP-Cron is not running. WooCommerce &gt; Status &gt; Tools &gt; Clear customer sessions also works, but logs out every customer.</li>
+</ul>
+<details><summary>Proposed SQL (1)</summary><pre>
+-- Delete 7,000 expired WooCommerce sessions
+DELETE FROM `shop_woocommerce_sessions` WHERE session_expiry &lt; UNIX_TIMESTAMP();
+
+
+</pre></details>
+</section>
+<section class="check s-critical" id="missing_indexes">
+<header><span class="badge b-critical">CRIT</span><h2>Missing indexes and primary keys</h2><code class="muted">missing_indexes</code></header>
+<p>3 missing keys on 3 tables</p>
+<table><thead><tr>
+<th>table</th>
+<th>index</th>
+<th>columns</th>
+<th>severity</th>
+</tr></thead><tbody>
+<tr><td>shop_posts</td><td>AUTO_INCREMENT</td><td>ID</td><td>critical</td></tr>
+<tr><td>shop_options</td><td>PRIMARY KEY</td><td>(option_id)</td><td>critical</td></tr>
+<tr><td>shop_postmeta</td><td>meta_key</td><td>(meta_key)</td><td>warning</td></tr>
+</tbody></table>
+<ul>
+<li>Missing primary keys or AUTO_INCREMENT usually come from an export/import that dropped table definitions. New posts and options get ID 0 and overwrite each other; fix this before anything else.</li>
+<li>Adding an index rewrites the table. On large tables run it in a quiet period, or use an online schema change tool.</li>
+</ul>
+<details><summary>Proposed SQL (3)</summary><pre>
+-- REVIEW: shop_posts.ID is not AUTO_INCREMENT; new rows get ID 0. Check the column type before running
+-- ALTER TABLE `shop_posts` MODIFY `ID` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+
+-- REVIEW: shop_options has no primary key on (option_id). Remove duplicate and zero IDs first, then add it
+-- ALTER TABLE `shop_options` ADD PRIMARY KEY (`option_id`);
+
+
+-- Add index meta_key on shop_postmeta
+ALTER TABLE `shop_postmeta` ADD INDEX `meta_key` (`meta_key`(191));
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="engine_collation">
+<header><span class="badge b-warning">WARN</span><h2>Table engines and collations</h2><code class="muted">engine_collation</code></header>
+<p>16 InnoDB, 1 MyISAM; 3 collations (target utf8mb4_unicode_520_ci)</p>
+<table><thead><tr>
+<th>table</th>
+<th>engine</th>
+<th>collation</th>
+<th>problem</th>
+</tr></thead><tbody>
+<tr><td>shop_yoast_indexable</td><td>MyISAM</td><td>utf8_general_ci</td><td>not InnoDB</td></tr>
+<tr><td>shop_yoast_indexable</td><td>MyISAM</td><td>utf8_general_ci</td><td>not utf8mb4</td></tr>
+<tr><td>shop_links</td><td>InnoDB</td><td>utf8mb4_general_ci</td><td>differs from utf8mb4_unicode_520_ci</td></tr>
+</tbody></table>
+<ul>
+<li>MyISAM/Aria tables lock the whole table on every write and are not crash safe. InnoDB is the default since MySQL 5.5 and is what WordPress expects.</li>
+<li>Tables in utf8 (utf8mb3) or latin1 cannot store emoji and many scripts. WordPress converts core tables to utf8mb4 on upgrade only when the server supports it; plugin tables often stay behind.</li>
+<li>Mixed collations cause &#x27;Illegal mix of collations&#x27; errors in joins between plugin and core tables.</li>
+</ul>
+<details><summary>Proposed SQL (3)</summary><pre>
+-- Convert shop_yoast_indexable from MyISAM to InnoDB (32.0 KB, locks the table while it runs)
+ALTER TABLE `shop_yoast_indexable` ENGINE=InnoDB;
+
+
+-- REVIEW: Convert shop_yoast_indexable to utf8mb4 / utf8mb4_unicode_520_ci. Converting rewrites every text column; test on a copy first
+-- ALTER TABLE `shop_yoast_indexable` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+
+
+-- REVIEW: Convert shop_links to utf8mb4 / utf8mb4_unicode_520_ci. Converting rewrites every text column; test on a copy first
+-- ALTER TABLE `shop_links` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+
+
+</pre></details>
+</section>
+<section class="check s-warning" id="table_sizes">
+<header><span class="badge b-warning">WARN</span><h2>Largest tables</h2><code class="muted">table_sizes</code></header>
+<p>19 tables, 1.6 GB total; 2 over 256 MB</p>
+<table><thead><tr>
+<th>table</th>
+<th>total</th>
+<th>data</th>
+<th>index</th>
+<th>rows</th>
+<th>note</th>
+</tr></thead><tbody>
+<tr><td>shop_postmeta</td><td>1.2 GB</td><td>900.0 MB</td><td>300.0 MB</td><td>~2,400,000</td><td>large, 120.0 MB free</td></tr>
+<tr><td>shop_actionscheduler_logs</td><td>480.0 MB</td><td>400.0 MB</td><td>80.0 MB</td><td>~1,800,000</td><td>large</td></tr>
+<tr><td>shop_options</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_posts</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_users</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_usermeta</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_terms</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_termmeta</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_term_taxonomy</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+<tr><td>shop_term_relationships</td><td>32.0 KB</td><td>16.0 KB</td><td>16.0 KB</td><td>~100</td><td></td></tr>
+</tbody></table>
+<ul>
+<li>Large tables: shop_postmeta, shop_actionscheduler_logs. Find out what fills them (logs, sessions, analytics and security plugins are common) before deleting anything.</li>
+<li>OPTIMIZE TABLE rebuilds the table to release free space. Run it after the cleanup statements, when traffic is low; it copies the table.</li>
+<li>2 tables in this schema do not use the shop_ prefix (another site, an old install or a non-WordPress app).</li>
+</ul>
+<details><summary>Proposed SQL (1)</summary><pre>
+-- Rebuild shop_postmeta to reclaim about 120.0 MB
+OPTIMIZE TABLE `shop_postmeta`;
+
+
+</pre></details>
+</section>
+<footer class="muted">
+<p>26 cleanup statement(s) available. Write them to a file for review with <code>wp-db-doctor fix -o fix.sql</code>.</p>
+<p>wp-db-doctor 0.1.0</p></footer>
+</main></body></html>
