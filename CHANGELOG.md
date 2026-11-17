@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `compare` command: diff two JSON reports without a database connection and
+  show checks that got worse, better or changed, numeric metric deltas and
+  database size growth. Text, Markdown and JSON output, several output files
+  in one run, `--all` to list unchanged checks.
+- `--fail-on-regression` and `--max-growth PERCENT` exit codes for `compare`,
+  so CI can fail on new problems only instead of on every existing finding.
+- Report files are validated on load (tool name, schema version, check ids and
+  statuses) with clear error messages.
+- The GitHub Actions example keeps the previous report in the cache and
+  compares against it.
+- `CODE_OF_CONDUCT.md`, issue forms for bug reports and feature requests, and a
+  pull request template.
+
 ## [0.1.0] - 2026-11-12
 
 First public release.

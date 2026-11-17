@@ -15,6 +15,14 @@ from typing import Any, TextIO
 from ._version import __version__
 from .audit import run_audit, utc_now
 from .checks import ALL_CHECKS, UnknownCheckError
+from .compare import (
+    COMPARE_FORMATS,
+    ReportLoadError,
+    compare_format_for_path,
+    compare_reports,
+    load_report,
+    render_comparison,
+)
 from .config import Config, ConfigError, load_config
 from .db import ConnectionSettings, Database, DatabaseError, connect
 from .fixes import (
@@ -106,6 +114,27 @@ def build_parser() -> argparse.ArgumentParser:
                      help="execute the plan (REVIEW statements are never executed)")
     fix.add_argument("--i-have-a-backup", action="store_true",
                      help="skip the interactive backup confirmation when using --apply")
+
+    cmp = sub.add_parser(
+        "compare", help="compare two JSON reports and show what changed",
+        description="Compare a baseline JSON report with a newer one (both written by "
+                    "`audit -o report.json`). No database connection is needed.")
+    cmp.add_argument("baseline", help="the older JSON report")
+    cmp.add_argument("current", help="the newer JSON report")
+    cmp.add_argument("-f", "--format", choices=COMPARE_FORMATS,
+                     help="format for standard output (default text)")
+    cmp.add_argument("-o", "--output", action="append", default=[], metavar="FILE",
+                     help="write the comparison to FILE; format from the extension "
+                          "(.json, .md, .txt). May be repeated")
+    cmp.add_argument("-q", "--quiet", action="store_true",
+                     help="do not print the comparison when writing files")
+    cmp.add_argument("-a", "--all", action="store_true",
+                     help="also list checks whose status and metrics did not change")
+    cmp.add_argument("--fail-on-regression", action="store_true",
+                     help="exit with status 1 if a check got worse or a new finding appeared")
+    cmp.add_argument("--max-growth", type=float, metavar="PERCENT",
+                     help="exit with status 1 if the total database size grew by more "
+                          "than PERCENT")
 
     sub.add_parser("checks", help="list the available checks")
 
@@ -294,6 +323,44 @@ def _connect(connector: Connector, target: Target, read_only: bool) -> Database:
         raise CLIError(str(exc), EXIT_DATABASE) from exc
 
 
+def cmd_compare(args, out: TextIO, err: TextIO) -> int:
+    if args.max_growth is not None and args.max_growth < 0:
+        raise CLIError("--max-growth must not be negative")
+    outputs = []
+    for path in args.output:
+        out_fmt = compare_format_for_path(path)
+        if out_fmt is None:
+            raise CLIError(f"cannot tell the format of {path!r}; use .json, .md or .txt")
+        outputs.append((path, out_fmt))
+    try:
+        baseline = load_report(args.baseline)
+        current = load_report(args.current)
+    except ReportLoadError as exc:
+        raise CLIError(str(exc)) from exc
+    comp = compare_reports(baseline, current, baseline_label=args.baseline,
+                           current_label=args.current)
+    for warning in comp.warnings:
+        print(f"warning: {warning}", file=err)
+    for path, out_fmt in outputs:
+        try:
+            Path(path).write_text(render_comparison(comp, out_fmt, args.all), encoding="utf-8")
+        except OSError as exc:
+            raise CLIError(f"cannot write {path}: {exc.strerror or exc}") from exc
+        print(f"wrote {path}", file=err)
+    if not (args.quiet and outputs):
+        out.write(render_comparison(comp, args.format or "text", args.all))
+    failed = False
+    if args.fail_on_regression and comp.regressions:
+        failed = True
+    if args.max_growth is not None:
+        growth = comp.size_growth_percent
+        if growth is not None and growth > args.max_growth:
+            print(f"database size grew by {growth:.1f}%, more than --max-growth "
+                  f"{args.max_growth:g}%", file=err)
+            failed = True
+    return EXIT_FINDINGS if failed else EXIT_OK
+
+
 def cmd_checks(out: TextIO) -> int:
     width = max(len(c.id) for c in ALL_CHECKS)
     for check in ALL_CHECKS:
@@ -337,6 +404,8 @@ def main(argv: Sequence[str] | None = None, *, connector: Connector | None = Non
             return cmd_checks(out)
         if args.command == "parse-config":
             return cmd_parse_config(args, env, out)
+        if args.command == "compare":
+            return cmd_compare(args, out, err)
         config = _load_config(args)
         target = resolve_target(args, env, ask_password=ask_password)
         if args.command == "audit":

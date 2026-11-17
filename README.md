@@ -36,6 +36,10 @@ backup exists.
   Risky suggestions such as turning off autoload for a plugin option or
   converting a collation are written as commented `REVIEW` lines and are never
   executed. Schema changes are left out unless you ask for them.
+- **Trend tracking**: `compare` diffs two JSON reports offline and shows which
+  checks got worse or better, how each numeric metric moved and how much the
+  database grew; `--fail-on-regression` and `--max-growth` turn it into a CI
+  gate that only fails on new problems.
 - **Safe by default**: audits run in a read-only session; the plan is a dry run;
   `--apply` asks you to type the database name to confirm a backup.
 - **Connections**: TCP, Unix socket, TLS (`--ssl-ca`), or credentials parsed
@@ -123,6 +127,8 @@ Full examples generated from synthetic data are in
 wp-db-doctor audit         [connection] [selection] [-f FORMAT] [-o FILE ...] [-q] [--fail-on LEVEL]
 wp-db-doctor fix           [connection] [selection] [-o FILE] [--include-schema] [--no-review]
                            [--apply [--i-have-a-backup]]
+wp-db-doctor compare       BASELINE CURRENT [-f FORMAT] [-o FILE ...] [-q] [-a]
+                           [--fail-on-regression] [--max-growth PERCENT]
 wp-db-doctor checks        list the checks
 wp-db-doctor parse-config  PATH   show what is read from wp-config.php (password masked)
 ```
@@ -209,13 +215,57 @@ How the plan is built:
 6. Schema changes (only with `--include-schema`): missing indexes, InnoDB
    conversion, then `OPTIMIZE TABLE` for fragmented tables.
 
+### Comparing reports
+
+Keep the JSON report from each run and compare it with the next one to see
+what changed. `compare` reads two files written by `audit -o report.json`; it
+does not connect to the database, so it also works on reports copied from
+another server.
+
+```console
+$ wp-db-doctor compare last-week.json today.json
+Comparing last-week.json (2026-11-05T03:17:00Z)
+     with today.json (2026-11-12T03:17:00Z)
+Database size: 1.2 GB -> 1.6 GB (+451.7 MB, +36.8%)
+Checks: 2 worse, 1 better, 15 same
+
+! worse    autoload          warning -> critical
+           autoload_bytes: 1.0 MB -> 4.0 MB (+3.0 MB, +300.0%)
+  better   post_revisions    critical -> ok
+           revisions: 25,000 -> 12 (-24,988, -100.0%)
+           old_revisions: 21,000 -> 0 (-21,000, -100.0%)
+! worse    action_scheduler  warning -> critical
+           failed: 12 -> 3,000 (+2,988, +24900.0%)
+
+2 regression(s): autoload, action_scheduler
+```
+
+A check counts as a **regression** when its status rank goes up (`ok`/`skipped`
+to `info` to `warning`/`error` to `critical`), or when it appears for the first
+time with a finding. A move between `warning` and `error`, which share a rank,
+is listed as `changed`. Checks that did not change are hidden unless you pass
+`--all`; the JSON output always lists every check.
+
+```console
+# Markdown for a pull request or ticket, JSON for scripts
+$ wp-db-doctor compare last-week.json today.json -o changes.md -o changes.json -q
+
+# CI gate: fail only on new problems, or when the database grew by more than 20%
+$ wp-db-doctor compare baseline.json report.json --fail-on-regression --max-growth 20
+```
+
+`compare` warns when the two reports are for different databases or table
+prefixes, or when the baseline is newer than the current report.
+[`examples/github-actions-audit.yml`](examples/github-actions-audit.yml) keeps
+the previous night's report in the Actions cache and compares against it.
+
 ### Exit codes
 
 | Code | Meaning |
 |---|---|
 | 0 | Success (or no check at or above `--fail-on`) |
-| 1 | A check reached the `--fail-on` level |
-| 2 | Usage or configuration error, or `--apply` not confirmed |
+| 1 | A check reached the `--fail-on` level, or `compare` found a regression (`--fail-on-regression`) or too much growth (`--max-growth`) |
+| 2 | Usage or configuration error, `--apply` not confirmed, or a file that is not a wp-db-doctor JSON report |
 | 3 | Connection or query error, or a statement failed during `--apply` |
 
 `--fail-on` takes `info`, `warning`, `critical` or `never` (default).
@@ -336,7 +386,8 @@ MySQL process list and slow query log.
 
 ## Contributing
 
-Bug reports and new checks are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Bug reports and new checks are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md)
+and the [Code of Conduct](CODE_OF_CONDUCT.md).
 Security issues: see [SECURITY.md](SECURITY.md).
 
 ## License

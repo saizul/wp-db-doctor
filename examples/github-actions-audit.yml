@@ -15,6 +15,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install "git+https://github.com/saizul/wp-db-doctor.git"
+      # Last night's report, if there is one, becomes the baseline.
+      - uses: actions/cache/restore@v4
+        with:
+          path: baseline/report.json
+          key: wp-db-doctor-report-${{ github.run_id }}
+          restore-keys: wp-db-doctor-report-
       - name: Audit
         env:
           WPDD_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
@@ -24,6 +30,24 @@ jobs:
             --user "${{ secrets.STAGING_DB_USER }}" \
             --database "${{ secrets.STAGING_DB_NAME }}" \
             -o report.html -o report.json --fail-on critical
+      - name: Compare with the previous run
+        if: always() && hashFiles('report.json') != ''
+        run: |
+          if [ -f baseline/report.json ]; then
+            wp-db-doctor compare baseline/report.json report.json -o report.changes.md \
+              --fail-on-regression --max-growth 20
+            cat report.changes.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No baseline yet; this run's report becomes the baseline."
+          fi
+      - name: Keep this report as the next baseline
+        if: always() && hashFiles('report.json') != ''
+        run: mkdir -p baseline && cp report.json baseline/report.json
+      - uses: actions/cache/save@v4
+        if: always() && hashFiles('baseline/report.json') != ''
+        with:
+          path: baseline/report.json
+          key: wp-db-doctor-report-${{ github.run_id }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
