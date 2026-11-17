@@ -50,3 +50,5 @@ jobs:
           wp-db-doctor --version
           wp-db-doctor checks
           wp-db-doctor parse-config tests/fixtures/wp-config-standard.php
+          wp-db-doctor compare examples/sample-report.json examples/sample-report.json \
+            --fail-on-regression

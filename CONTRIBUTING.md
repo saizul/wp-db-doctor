@@ -91,3 +91,9 @@ Keep pull requests focused on one change, describe what it does and why, and
 mention anything you could not test (for example a server version you do not
 have). By contributing you agree that your work is released under the MIT
 license of this project.
+
+## Code of conduct
+
+Everyone taking part in this project is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md). Please report unacceptable behaviour as
+described there.
