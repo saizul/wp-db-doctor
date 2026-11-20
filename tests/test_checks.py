@@ -52,6 +52,7 @@ def test_bloated_site_statuses(bloated_db, make_ctx):
         "auto_drafts": Status.WARNING,
         "trashed_posts": Status.WARNING,
         "spam_comments": Status.CRITICAL,
+        "oembed_cache": Status.WARNING,
         "orphaned_postmeta": Status.WARNING,
         "orphaned_termmeta": Status.INFO,
         "orphaned_commentmeta": Status.OK,
@@ -358,3 +359,47 @@ def test_every_query_is_tagged_and_safe(bloated_db, make_ctx):
     # FakeDatabase asserts tags and %-safety on each query; run everything.
     run_checks(select_checks(), make_ctx(bloated_db))
     assert len(bloated_db.queries) > 20
+
+
+def test_oembed_cache_clean_and_bloated(clean_db, bloated_db, make_ctx):
+    clean = run(clean_db, make_ctx, "oembed_cache")
+    assert clean.status is Status.OK and clean.fixes == []
+    assert clean.metrics == {"oembed_cache_posts": 12, "oembed_legacy_meta": 0, "oembed_failed": 0,
+                             "oembed_bytes": 9000}
+
+    r = run(bloated_db, make_ctx, "oembed_cache")
+    assert r.status is Status.WARNING
+    assert r.metrics["oembed_failed"] == 1200
+    assert r.summary == ("4,200 oembed_cache posts, 1,500 legacy _oembed_ meta rows, "
+                         "1,200 failed (8.0 MB)")
+    assert "1,200 cached oEmbed lookups failed ({{unknown}})" in r.recommendations[0]
+    assert "Instagram" in r.recommendations[1]
+    sql = [f.sql for f in r.fixes]
+    # Only failed lookups are deleted: their post meta first, the posts, then legacy meta.
+    assert all("{{unknown}}" in s for s in sql)
+    assert any(s.startswith("DELETE pm FROM `wp_postmeta` pm") for s in sql)
+    assert any(s.startswith("DELETE p FROM `wp_posts` p WHERE p.post_type = 'oembed_cache'")
+               for s in sql)
+    assert "CONCAT('_oembed_time_', SUBSTRING(v.meta_key, 9))" in sql[-2]
+    assert sql[-1].startswith("DELETE v FROM `wp_postmeta` v WHERE v.meta_key LIKE")
+    assert r.fixes[-1].estimated_rows == 300
+
+
+def test_oembed_cache_failed_only_and_without_postmeta(make_ctx):
+    responses = clean_responses()
+    responses["oembed"] = [{"total": 5, "failed": 2, "bytes": 100}]
+    r = run(FakeDatabase(responses), make_ctx, "oembed_cache")
+    assert r.status is Status.INFO  # below the warning threshold, but failed lookups to clean
+    assert len(r.recommendations) == 1 and len(r.fixes) == 3
+
+    responses = clean_responses()
+    responses["tables"] = [t for t in responses["tables"] if t["TABLE_NAME"] != "wp_postmeta"]
+    db = FakeDatabase(responses)
+    r = run(db, make_ctx, "oembed_cache")
+    assert "oembed_meta" not in db.tags()
+    assert r.metrics["oembed_legacy_meta"] == 0
+
+
+def test_oembed_cache_threshold(bloated_db, make_ctx):
+    th = Thresholds(oembed_cache_warning=10_000)
+    assert run(bloated_db, make_ctx, "oembed_cache", thresholds=th).status is Status.INFO

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `oembed_cache` check: counts cached embeds (`oembed_cache` posts and legacy
+  `_oembed_*` post meta), their size and the failed lookups stored as
+  `{{unknown}}`. Warns above `oembed_cache_warning` (default 2000) entries.
+  The fix plan deletes only failed lookups, with their post meta and, for
+  legacy meta, the matching `_oembed_time_*` rows; working caches are kept
+  because providers such as Facebook and Instagram cannot be fetched again
+  without an access token.
 - `compare` command: diff two JSON reports without a database connection and
   show checks that got worse, better or changed, numeric metric deltas and
   database size growth. Text, Markdown and JSON output, several output files

@@ -7,7 +7,13 @@ from collections.abc import Iterable
 from ..db import DatabaseError
 from ..models import CheckResult, Status
 from .base import Check, Context, load_context
-from .content import AutoDraftsCheck, RevisionsCheck, SpamCommentsCheck, TrashedPostsCheck
+from .content import (
+    AutoDraftsCheck,
+    OembedCacheCheck,
+    RevisionsCheck,
+    SpamCommentsCheck,
+    TrashedPostsCheck,
+)
 from .options import AutoloadCheck, ExpiredTransientsCheck
 from .orphans import (
     OrphanedCommentmetaCheck,
@@ -35,6 +41,7 @@ ALL_CHECKS: tuple[type[Check], ...] = (
     AutoDraftsCheck,
     TrashedPostsCheck,
     SpamCommentsCheck,
+    OembedCacheCheck,
     OrphanedPostmetaCheck,
     OrphanedTermmetaCheck,
     OrphanedCommentmetaCheck,
