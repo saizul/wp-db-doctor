@@ -20,6 +20,8 @@ auto_drafts_warning = 100
 trash_min_age_days = 30
 trashed_warning = 200
 
+oembed_cache_warning = 2000
+
 comments_warning = 1000
 comments_critical = 50000
 

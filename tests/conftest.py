@@ -115,6 +115,8 @@ def clean_responses(prefix: str = "wp_", extra: tuple[str, ...] = (),
         "auto_drafts": [{"total": 1, "old": 0}],
         "trash": [],
         "comments": [],
+        "oembed": [{"total": 12, "failed": 0, "bytes": 9000}],
+        "oembed_meta": [{"total": 0, "failed": 0, "bytes": 0}],
         "orphans:postmeta": [{"orphans": 0, "bytes": 0}],
         "orphans:termmeta": [{"orphans": 0, "bytes": 0}],
         "orphans:commentmeta": [{"orphans": 0, "bytes": 0}],
@@ -169,6 +171,8 @@ def bloated_responses(prefix: str = "wp_") -> dict[str, Response]:
     r["comments"] = [{"comment_approved": "spam", "total": 60000},
                      {"comment_approved": "trash", "total": 40},
                      {"comment_approved": "0", "total": 3}]
+    r["oembed"] = [{"total": 4200, "failed": 900, "bytes": 6 * MB}]
+    r["oembed_meta"] = [{"total": 1500, "failed": 300, "bytes": 2 * MB}]
     r["orphans:postmeta"] = [{"orphans": 54000, "bytes": 12 * MB}]
     r["orphans_top:postmeta"] = [{"meta_key": "_edit_lock", "total": 30000},
                                  {"meta_key": "_elementor_data", "total": 24000}]

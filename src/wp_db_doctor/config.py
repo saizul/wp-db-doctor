@@ -41,6 +41,8 @@ class Thresholds:
     trash_min_age_days: int = 30
     trashed_warning: int = 200
 
+    oembed_cache_warning: int = 2000
+
     comments_warning: int = 1000
     comments_critical: int = 50000
 

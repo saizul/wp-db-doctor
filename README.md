@@ -20,9 +20,9 @@ backup exists.
 
 ## Features
 
-- **18 checks**: autoloaded options size with the largest offenders and their
+- **19 checks**: autoloaded options size with the largest offenders and their
   likely owner, expired transients, post revisions, auto-drafts, trashed
-  posts, spam and trashed comments, orphaned post/term/comment/user meta,
+  posts, spam and trashed comments, the oEmbed cache, orphaned post/term/comment/user meta,
   orphaned term relationships, Action Scheduler backlog (completed, failed,
   canceled, overdue), WooCommerce sessions, missing indexes and primary keys
   (including lost `AUTO_INCREMENT`), table engines and collations, the largest
@@ -282,6 +282,7 @@ the previous night's report in the Actions cache and compares against it.
 | `auto_drafts` | content | Auto-drafts older than 7 days (a sign WP-Cron is broken) | delete them with their meta |
 | `trashed_posts` | content | Trashed posts by post type | delete posts trashed more than 30 days ago, with meta, terms and comments |
 | `spam_comments` | content | Spam, trash, post-trashed and pending comments | delete spam and trash with their meta |
+| `oembed_cache` | content | `oembed_cache` posts and legacy `_oembed_*` post meta, and how many are failed lookups (`{{unknown}}`) | delete failed lookups only (working caches are kept: some providers, such as Instagram, cannot be fetched again without a token) |
 | `orphaned_postmeta` | orphans | `postmeta` rows without a post, top meta keys | delete |
 | `orphaned_termmeta` | orphans | `termmeta` rows without a term | delete |
 | `orphaned_commentmeta` | orphans | `commentmeta` rows without a comment | delete |

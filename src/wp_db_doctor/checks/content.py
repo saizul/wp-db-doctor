@@ -303,3 +303,95 @@ class SpamCommentsCheck(Check):
             recommendations=recommendations,
             fixes=fixes,
         )
+
+
+# WordPress stores this when a provider could not be reached or had no embed.
+OEMBED_UNKNOWN = "'{{unknown}}'"
+OEMBED_META = r"'\_oembed\_%'"
+OEMBED_TIME_META = r"'\_oembed\_time\_%'"
+
+
+class OembedCacheCheck(Check):
+    id = "oembed_cache"
+    title = "oEmbed cache"
+    category = "content"
+    description = ("Cached embed HTML for YouTube, X, Vimeo and other oEmbed providers: "
+                   "oembed_cache posts (WordPress 4.9+) and legacy _oembed_* post meta, "
+                   "including failed lookups stored as {{unknown}}.")
+    requires = ("posts",)
+    fixable = True
+
+    def run(self, ctx: Context) -> CheckResult:
+        posts = ctx.t("posts")
+        row = ctx.one(
+            "/* wpdd:oembed */ SELECT COUNT(*) AS total, "
+            f"COALESCE(SUM(p.post_content = {OEMBED_UNKNOWN}), 0) AS failed, "
+            "COALESCE(SUM(LENGTH(p.post_content)), 0) AS bytes "
+            f"FROM {posts} p WHERE p.post_type = 'oembed_cache'"
+        )
+        cache_posts, failed_posts = to_int(row.get("total")), to_int(row.get("failed"))
+        size = to_int(row.get("bytes"))
+        legacy = failed_legacy = 0
+        value_cond = (f"v.meta_key LIKE {OEMBED_META} AND v.meta_key NOT LIKE {OEMBED_TIME_META}")
+        if ctx.has("postmeta"):
+            meta = ctx.one(
+                "/* wpdd:oembed_meta */ SELECT COUNT(*) AS total, "
+                f"COALESCE(SUM(v.meta_value = {OEMBED_UNKNOWN}), 0) AS failed, "
+                "COALESCE(SUM(LENGTH(v.meta_value)), 0) AS bytes "
+                f"FROM {ctx.t('postmeta')} v WHERE {value_cond}"
+            )
+            legacy, failed_legacy = to_int(meta.get("total")), to_int(meta.get("failed"))
+            size += to_int(meta.get("bytes"))
+
+        total = cache_posts + legacy
+        failed = failed_posts + failed_legacy
+        # Working caches are not a problem until there are many; failed lookups are junk.
+        if total >= ctx.thresholds.oembed_cache_warning:
+            status = Status.WARNING
+        else:
+            status = Status.INFO if failed else Status.OK
+        recommendations: list[str] = []
+        fixes: list[FixStatement] = []
+        if failed_posts:
+            where = f"p.post_type = 'oembed_cache' AND p.post_content = {OEMBED_UNKNOWN}"
+            fixes += delete_posts_fixes(ctx, self.id, where=where,
+                                        what=f"{plural(failed_posts, 'failed oEmbed lookup')}",
+                                        estimated=failed_posts)
+        if failed_legacy:
+            pm = ctx.t("postmeta")
+            failed_cond = f"{value_cond} AND v.meta_value = {OEMBED_UNKNOWN}"
+            fixes.append(FixStatement(
+                check_id=self.id,
+                description="Delete the timestamps of failed legacy oEmbed lookups",
+                sql=(f"DELETE t FROM {pm} t INNER JOIN {pm} v ON v.post_id = t.post_id "
+                     "AND t.meta_key = CONCAT('_oembed_time_', SUBSTRING(v.meta_key, 9)) "
+                     f"WHERE {failed_cond}"),
+                stage=STAGE_CONTENT,
+            ))
+            fixes.append(FixStatement(
+                check_id=self.id,
+                description=f"Delete {plural(failed_legacy, 'failed legacy oEmbed lookup')}",
+                sql=f"DELETE v FROM {pm} v WHERE {failed_cond}",
+                stage=STAGE_CONTENT,
+                estimated_rows=failed_legacy,
+            ))
+        if failed:
+            recommendations.append(
+                f"{plural(failed, 'cached oEmbed lookup')} failed ({{{{unknown}}}}). WordPress "
+                "keeps these so it does not ask the provider on every view; they hold no embed "
+                "and are safe to delete. The fix plan deletes only failed lookups.")
+        if total - failed > 0 and status.rank >= Status.WARNING.rank:
+            recommendations.append(
+                "Working oEmbed caches are rebuilt on the next page view, but providers that now "
+                "need an access token (Facebook, Instagram) cannot be fetched again; the plan "
+                "keeps them. Clear one post with `wp embed cache clear <post-id>`.")
+        return self.result(
+            status,
+            f"{plural(cache_posts, 'oembed_cache post')}, "
+            f"{plural(legacy, 'legacy _oembed_ meta row')}, "
+            f"{format_int(failed)} failed ({format_bytes(size)})",
+            metrics={"oembed_cache_posts": cache_posts, "oembed_legacy_meta": legacy,
+                     "oembed_failed": failed, "oembed_bytes": size},
+            recommendations=recommendations,
+            fixes=fixes,
+        )
